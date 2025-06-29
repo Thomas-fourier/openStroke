@@ -1,6 +1,5 @@
 package com.example.openstroke
 
-import GPSHelper
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
@@ -12,6 +11,7 @@ import androidx.core.app.ActivityCompat
 
 class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
 
+    // GPS values
     private lateinit var gpsHelper: GPSHelper
     private lateinit var speedTextView: TextView
 
@@ -20,7 +20,6 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
         setContentView(R.layout.activity_main)
 
         speedTextView = findViewById(R.id.speedTextView)
-
         gpsHelper = GPSHelper(this, this)
 
         if (checkPermissions()) {
@@ -50,7 +49,7 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
         val speed = 500 / location.speed // Speed in second/500m
         val minutes = (speed / 60).toInt()
         val seconds = (speed % 60).toInt()
-        speedTextView.text = "Speed: $minutes m $seconds /500m"
+        "Speed: $minutes m $seconds /500m".also { speedTextView.text = it }
     }
 
     override fun onRequestPermissionsResult(

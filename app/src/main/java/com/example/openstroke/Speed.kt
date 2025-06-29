@@ -1,3 +1,5 @@
+package com.example.openstroke
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -12,7 +14,6 @@ class GPSHelper(private val context: Context, private val locationUpdateListener
 
     private var locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-            locationResult ?: return
             for (location in locationResult.locations) {
                 locationUpdateListener.onLocationUpdate(location)
             }
