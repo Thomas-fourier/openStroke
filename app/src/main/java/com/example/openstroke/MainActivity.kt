@@ -9,11 +9,19 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 
-class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
+class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener,
+    StrokeCounter.StrokeListener {
 
     // GPS values
     private lateinit var gpsHelper: GPSHelper
     private lateinit var speedTextView: TextView
+
+    // Stroke counter
+    private lateinit var strokeCounter: StrokeCounter
+    private var strokeCount = 0
+    private lateinit var strokeCountTextView: TextView
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,8 +30,13 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
         speedTextView = findViewById(R.id.speedTextView)
         gpsHelper = GPSHelper(this, this)
 
+
+        strokeCountTextView = findViewById(R.id.strokeCountTextView)
+        strokeCounter = StrokeCounter(this, this)
+
         if (checkPermissions()) {
             gpsHelper.startLocationUpdates()
+            strokeCounter.startListening()
         } else {
             requestPermissions()
         }
@@ -44,7 +57,13 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
         )
     }
 
-    @SuppressLint("SetTextI18n")
+    override fun onStrokeDetected() {
+        strokeCount++
+        runOnUiThread {
+            "Stroke Count: $strokeCount".also { strokeCountTextView.text = it }
+        }
+    }
+
     override fun onLocationUpdate(location: Location) {
         val speed = 500 / location.speed // Speed in second/500m
         val minutes = (speed / 60).toInt()
@@ -68,6 +87,7 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener {
     override fun onDestroy() {
         super.onDestroy()
         gpsHelper.stopLocationUpdates()
+        strokeCounter.stopListening()
     }
 
     companion object {
