@@ -2,43 +2,30 @@ package com.example.openstroke
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 
-class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener,
-    StrokeCounter.StrokeListener {
+class MainActivity : AppCompatActivity(), MeasuredValues.UpdateMeasuredValues {
 
-    // GPS values
-    private lateinit var gpsHelper: GPSHelper
-    private lateinit var speedTextView: TextView
-
-    // Stroke counter
-    private lateinit var strokeCounter: StrokeCounter
-    private var strokeCount = 0
-    private lateinit var strokeCountTextView: TextView
-
-
+    private lateinit var measuredValues: MeasuredValues
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        measuredValues = MeasuredValues(this, this)
 
-        speedTextView = findViewById(R.id.speedTextView)
-        gpsHelper = GPSHelper(this, this)
-
-
-        strokeCountTextView = findViewById(R.id.strokeCountTextView)
-        strokeCounter = StrokeCounter(this, this)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         if (checkPermissions()) {
-            gpsHelper.startLocationUpdates()
-            strokeCounter.startListening()
-        } else {
             requestPermissions()
+        } else {
+            measuredValues.startMeasures()
         }
+
+
     }
 
     private fun checkPermissions(): Boolean {
@@ -56,20 +43,6 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener,
         )
     }
 
-    override fun onStrokeDetected() {
-        strokeCount++
-        runOnUiThread {
-            "Stroke Count: $strokeCount".also { strokeCountTextView.text = it }
-        }
-    }
-
-    override fun onLocationUpdate(location: Location) {
-        val speed = 500 / location.speed // Speed in second/500m
-        val minutes = (speed / 60).toInt()
-        val seconds = (speed % 60).toInt()
-        "Speed: $minutes m $seconds /500m".also { speedTextView.text = it }
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -78,18 +51,36 @@ class MainActivity : AppCompatActivity(), GPSHelper.LocationUpdateListener,
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == PERMISSION_REQUEST_ACCESS_LOCATION) {
             if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                gpsHelper.startLocationUpdates()
+                measuredValues.startMeasures()
             }
         }
     }
 
+
+    override fun update() {
+        val speedTextView: TextView = findViewById(R.id.speedTextView)
+        val strokeCountTextView: TextView = findViewById(R.id.strokeCountTextView)
+        val distanceTextView: TextView = findViewById(R.id.distanceTextView)
+
+        val speed = 500 / measuredValues.speed // Speed in second/500m
+        val minutes = (speed / 60).toInt()
+        val seconds = (speed % 60).toInt()
+
+        runOnUiThread {
+            "Stroke Count: ${measuredValues.strokeTime}".also { strokeCountTextView.text = it }
+            "Speed: $minutes m $seconds /500m".also { speedTextView.text = it }
+            "Distance: ${measuredValues.distance}".also { distanceTextView.text = it }
+        }
+
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        gpsHelper.stopLocationUpdates()
-        strokeCounter.stopListening()
+        measuredValues.stopMeasures()
     }
 
     companion object {
         private const val PERMISSION_REQUEST_ACCESS_LOCATION = 100
     }
+
 }
