@@ -2,20 +2,18 @@ package com.example.openstroke
 
 import android.content.Context
 import android.location.Location
-import kotlin.time.Duration
-import kotlin.time.TimeSource
 
 class MeasuredValues (private val context: Context, private val updateMeasuredValues: UpdateMeasuredValues):
         GPSHelper.LocationUpdateListener,
         StrokeCounter.StrokeListener {
 
     var strokeCount = 0 // in number
-    var strokeTime = Duration.ZERO // In seconds
+    var strokeTime = System.currentTimeMillis() // In ms
     var distance = 0f // Total distance in m
     var speed = 0f // Speed in m.s-1
-    var time = Duration.ZERO  // in seconds
+    var time = System.currentTimeMillis()  // in ms
 
-    private var lastStrokeTime = TimeSource.Monotonic.markNow()
+    private var lastStrokeTime = System.currentTimeMillis()
     private var lastPoint: Location? = null
 
     private lateinit var gpsHelper: GPSHelper
@@ -39,7 +37,7 @@ class MeasuredValues (private val context: Context, private val updateMeasuredVa
     }
 
     override fun onStrokeDetected() {
-        val tmp = TimeSource.Monotonic.markNow()
+        val tmp = System.currentTimeMillis()
         strokeTime = tmp - lastStrokeTime
         time += strokeTime
         lastStrokeTime = tmp
