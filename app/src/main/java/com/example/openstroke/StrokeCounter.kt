@@ -14,10 +14,12 @@ class StrokeCounter(context: Context, private val strokeListener: StrokeListener
     private var lastAcceleration: Float = 0f
     private var lastStrokeTime: Long = 0
     private val strokeThreshold = 10f // Threshold for detecting a stroke
-    private val timeThreshold = 1000L // Minimum time between strokes in milliseconds
+    private val timeThresholdMin = 1000L // Minimum time between strokes in milliseconds
+    private val timeThresholdMax = 6000L // Minimum time between strokes in milliseconds
 
     interface StrokeListener {
         fun onStrokeDetected()
+        fun onStrokeStop()
     }
 
     fun startListening() {
@@ -45,9 +47,13 @@ class StrokeCounter(context: Context, private val strokeListener: StrokeListener
 
             // Check if the change in acceleration exceeds the threshold and enough time has passed
             val currentTime = System.currentTimeMillis()
-            if (deltaAcceleration > strokeThreshold && currentTime - lastStrokeTime > timeThreshold) {
+            if (deltaAcceleration > strokeThreshold
+                && currentTime - lastStrokeTime > timeThresholdMin) {
                 strokeListener.onStrokeDetected()
                 lastStrokeTime = currentTime
+            }
+            if (currentTime - lastStrokeTime > timeThresholdMax ) {
+                strokeListener.onStrokeStop()
             }
         }
     }
